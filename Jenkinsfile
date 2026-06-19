@@ -21,44 +21,25 @@ pipeline {
     {
       steps {
       checkout([
-        $class: 'GitSCM', 
-        doGenerateSubmoduleConfigurations: false, 
+        $class: 'GitSCM',
+        doGenerateSubmoduleConfigurations: false,
         extensions: [],
-        submoduleCfg: [], 
-        // branches: [[name: '$branch']],
+        submoduleCfg: [],
         userRemoteConfigs: [[url: "https://github.com/cedrick13bienvenue/tooling-jenkins.git",credentialsId:'GITHUB_CREDENTIALS']]
         ])
-        
+
       }
         }
 
-    // stage('Checkout Helm chart')
-    // {
-    //   steps {
-    //   checkout([
-    //     $class: 'GitSCM', 
-    //     doGenerateSubmoduleConfigurations: false, 
-    //     extensions: [[$class: 'RelativeTargetDirectory', 
-    //         relativeTargetDir: 'helm']],
-    //     submoduleCfg: [], 
-    //     branches: [[name: 'master']],
-    //     userRemoteConfigs: [[url: "https://gitlab.com/propitix/kubernetes/helm.git",credentialsId:'GIT_CREDENTIALS']]
-    //     ])
-        
-    //   }
-    //     }
           stage('Build preparations')
         {
             steps
             {
-                script 
+                script
                 {
-                    // calculate GIT lastest commit short-hash
                     gitCommitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                     shortCommitHash = gitCommitHash.take(7)
-                    // calculate a sample version tag
                     VERSION = shortCommitHash
-                    // set the build display name
                     currentBuild.displayName = "#${BUILD_ID}-${VERSION}"
                     IMAGE = "$PROJECT:$VERSION"
                 }
@@ -73,7 +54,6 @@ pipeline {
             echo 'Build Dockerfile....'
             script {
                 sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
-                // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
                 docker.image("$IMAGE").push("dev-$BUILD_NUMBER")
@@ -90,7 +70,6 @@ pipeline {
             echo 'Build Dockerfile....'
             script {
                 sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
-                // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
                 docker.image("$IMAGE").push("staging-$BUILD_NUMBER")
@@ -99,14 +78,12 @@ pipeline {
         }
     }
 
-
     stage('Build For Production Environment') {
         when { tag "release-*" }
         steps {
             echo 'Build Dockerfile....'
             script {
                 sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
-                // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
                 docker.image("$IMAGE").push("prod-$BUILD_NUMBER")
@@ -115,23 +92,6 @@ pipeline {
         }
     }
 
-//
-
-
-
-
-
-
-
-
-      // stage('Update Helm appVersion') {
-      //   steps {
-      //       echo 'Update appVersion'
-      //       sh '''
-      //             cat helm/Chart.yaml.template | sed "s/appVersion: .*/appVersion: \"${BUILD_NUMBER}\"/g" > helm/Chart.yaml
-      //         '''
-      //   }
-      // }
     }
 
         post
@@ -141,4 +101,4 @@ pipeline {
             sh "docker rmi -f $IMAGE "
         }
     }
-} 
+}
