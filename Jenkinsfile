@@ -1,11 +1,10 @@
 pipeline {
   agent any
 
-      environment 
+      environment
     {
         PROJECT     = 'zooto-tooling-prod'
         ECRURL      = '059636857273.dkr.ecr.eu-central-1.amazonaws.com'
-        DEPLOY_TO = 'development'
     }
 
   stages {
@@ -27,7 +26,7 @@ pipeline {
         extensions: [],
         submoduleCfg: [], 
         // branches: [[name: '$branch']],
-        userRemoteConfigs: [[url: "https://github.com/darey-io/tooling.git ",credentialsId:'GITHUB_CREDENTIALS']] 	
+        userRemoteConfigs: [[url: "https://github.com/cedrick13bienvenue/tooling-jenkins.git",credentialsId:'GITHUB_CREDENTIALS']]
         ])
         
       }
