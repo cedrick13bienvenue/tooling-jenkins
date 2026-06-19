@@ -56,7 +56,7 @@ function register(){
 
 	// register user if there are no errors in the form
 	if (count($errors) == 0) {
-		$password = md5($password_1);//encrypt the password before saving in the database
+		$password = password_hash($password_1, PASSWORD_BCRYPT);
 
 		if (isset($_POST['user_type'])) {
 			$user_type = e($_POST['user_type']);
@@ -146,26 +146,23 @@ function login(){
 
 	// attempt login if no errors on form
 	if (count($errors) == 0) {
-		$password = md5($password);
-
-		$query = "SELECT * FROM users WHERE username='$username' AND password='$password' LIMIT 1";
+		$query = "SELECT * FROM users WHERE username='$username' LIMIT 1";
 		$results = mysqli_query($db, $query);
 
-		if (mysqli_num_rows($results) == 1) { // user found
-			// check if user is admin or user
+		if (mysqli_num_rows($results) == 1) {
 			$logged_in_user = mysqli_fetch_assoc($results);
-			if ($logged_in_user['user_type'] == 'admin') {
-
+			if (password_verify($password, $logged_in_user['password'])) {
 				$_SESSION['user'] = $logged_in_user;
 				$_SESSION['success']  = "You are now logged in";
-				header('location: admin_tooling.php');		  
-			}else{
-				$_SESSION['user'] = $logged_in_user;
-				$_SESSION['success']  = "You are now logged in";
-
-				header('location: index.php');
+				if ($logged_in_user['user_type'] == 'admin') {
+					header('location: admin_tooling.php');
+				} else {
+					header('location: index.php');
+				}
+			} else {
+				array_push($errors, "Wrong username/password combination");
 			}
-		}else {
+		} else {
 			array_push($errors, "Wrong username/password combination");
 		}
 	}
