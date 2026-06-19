@@ -2,7 +2,12 @@
 session_start();
 
 // connect to database
-$db = mysqli_connect('mysql.tooling.svc.cluster.local', 'admin', 'admin', 'tooling');
+$db = mysqli_connect(
+    getenv('DB_HOST') ?: 'mysql.tooling.svc.cluster.local',
+    getenv('DB_USER') ?: 'admin',
+    getenv('DB_PASS') ?: 'admin',
+    getenv('DB_NAME') ?: 'tooling'
+);
 
 // Check connection
 // if (mysqli_connect_errno()) {
