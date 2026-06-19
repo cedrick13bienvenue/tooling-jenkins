@@ -9,14 +9,10 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */
-;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */
-;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */
-;
-/*!40101 SET NAMES utf8mb4 */
-;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 --
 -- Database: `multi_login`
 --
@@ -35,6 +31,10 @@ CREATE TABLE `users` (
 --
 -- Dumping data for table `users`
 --
+-- NOTE: The password below is a bcrypt hash. Generate one with:
+--   PHP: password_hash('your_password', PASSWORD_BCRYPT)
+-- Replace this seed hash before deploying to production.
+--
 INSERT INTO `users` (
     `id`,
     `username`,
@@ -46,8 +46,8 @@ INSERT INTO `users` (
 VALUES (
     1,
     'admin',
-    '21232f297a57a5a743894a0e4a801fc3',
-    'dare@dare.com',
+    '$2y$10$REPLACE_WITH_OUTPUT_OF_password_hash_BEFORE_DEPLOYING',
+    'admin@example.com',
     'admin',
     '1'
   );
@@ -58,7 +58,10 @@ VALUES (
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-ADD PRIMARY KEY (`id`);
+ADD PRIMARY KEY (`id`),
+ADD UNIQUE KEY `username` (`username`),
+ADD UNIQUE KEY `email` (`email`),
+ADD INDEX `idx_user_type` (`user_type`);
 --
 -- AUTO_INCREMENT for dumped tables
 --
@@ -69,9 +72,6 @@ ALTER TABLE `users`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
   AUTO_INCREMENT = 3;
 COMMIT;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */
-;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */
-;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */
-;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
