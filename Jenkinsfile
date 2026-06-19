@@ -72,7 +72,7 @@ pipeline {
         steps {
             echo 'Build Dockerfile....'
             script {
-                sh("eval \$(aws ecr get-login --no-include-email --region eu-central-1 | sed 's|https://||')") 
+                sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
                 // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
@@ -89,7 +89,7 @@ pipeline {
         steps {
             echo 'Build Dockerfile....'
             script {
-                sh("eval \$(aws ecr get-login --no-include-email --region eu-central-1 | sed 's|https://||')") 
+                sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
                 // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
@@ -105,7 +105,7 @@ pipeline {
         steps {
             echo 'Build Dockerfile....'
             script {
-                sh("eval \$(aws ecr get-login --no-include-email --region eu-central-1 | sed 's|https://||')") 
+                sh("aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin https://$ECRURL")
                 // sh "docker build --network=host -t $IMAGE -f deploy/docker/Dockerfile ."
                 sh "docker build --network=host -t $IMAGE ."
                 docker.withRegistry("https://$ECRURL"){
