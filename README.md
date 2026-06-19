@@ -1,75 +1,85 @@
-[![nginx 1.17.2](https://img.shields.io/badge/nginx-1.17.2-brightgreen.svg?&logo=nginx&logoColor=white&style=for-the-badge)](https://nginx.org/en/CHANGES) [![php 7.3.8](https://img.shields.io/badge/php--fpm-7.3.8-blue.svg?&logo=php&logoColor=white&style=for-the-badge)](https://secure.php.net/releases/7_3_8.php)
+# Propitix Tooling Website
 
+A Dockerized PHP web application that serves as a DevOps dashboard, linking to internal tooling (Jenkins, Grafana, Rancher, Prometheus, Kubernetes metrics, Kibana, Artifactory). It includes login and admin user management backed by a MySQL database.
 
-## Introduction
-This is a Dockerfile to build a debian based container image running nginx and php-fpm 7.3.x / 7.2.x / 7.1.x / 7.0.x & Composer.
+## Stack
 
-### Versioning
-| Docker Tag | GitHub Release | Nginx Version | PHP Version | Debian Version |
-|-----|-------|-----|--------|--------|
-| latest | master Branch |1.17.2 | 7.3.8 | buster |
+| Component | Details |
+|---|---|
+| Runtime | PHP 8.2 + Apache (`php:8.2-apache`) |
+| Database | MySQL (via `mysqli` extension) |
+| Container registry | AWS ECR (`eu-central-1`) |
+| CI/CD | Jenkins (multibranch pipeline) |
+| Target platform | Kubernetes (DB reached via `mysql.tooling.svc.cluster.local`) |
 
-
-## How to use this repository
-The build is automatically triggered by a git push to your feature/[branch]
-
-## First clone the repository to your workstation
-```
-$ git clone https://gitlab.com/propitix/microservices/php-frontend.git
-$ cd frontend-propitix
-```
-
-Create a feature branch. # Always start with feature/[name of your branch]
-```
-git branch -b feature/add-css-style-to-about-us-page
-```
-
-
-Update the application code in
-```
-./html/
-```
-
-Then add/commit/push to gitlab
+## Architecture
 
 ```
-git status # to see your changes
+Browser → Apache (port 80) → PHP app → MySQL (K8s service)
 ```
 
-```
-git add --all # If you are satisfied with your changes and willing to push everything. Otherwise, select only the files to add
+The app is designed to run as a container in Kubernetes. The database host is resolved via Kubernetes service DNS.
+
+## Environment Variables
+
+Configure these at runtime (via K8s Secret or Docker `-e`):
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_HOST` | `mysql.tooling.svc.cluster.local` | MySQL hostname |
+| `DB_USER` | `admin` | MySQL username |
+| `DB_PASS` | `admin` | MySQL password |
+| `DB_NAME` | `tooling` | MySQL database name |
+| `PORT` | `80` | Port Apache listens on |
+
+## Database Setup
+
+Import the schema and seed data:
+
+```bash
+mysql -u <user> -p <database> < tooling-db.sql
 ```
 
-```
-git commit -m "Put some message about this push here"
+**Important:** The seed admin user password in `tooling-db.sql` is a placeholder. Before deploying, generate a real bcrypt hash and update the INSERT:
+
+```php
+echo password_hash('your_password', PASSWORD_BCRYPT);
 ```
 
-## Push your changes to gitlab, and merge to dev branch
-```
-git push --set-upstream origin feature/[Your branch name]
+## Running Locally
+
+```bash
+docker build -t tooling-app .
+docker run -p 8080:80 \
+  -e DB_HOST=<mysql_host> \
+  -e DB_USER=<user> \
+  -e DB_PASS=<password> \
+  -e DB_NAME=tooling \
+  tooling-app
 ```
 
-### Validate your changes have been triggered by gitlab-ci in
-[propitix-scm] (https://gitlab.com/propitix/microservices/frontend-propitix)
+Then open `http://localhost:8080`.
 
-### Check the image have been pushed to
-[Google Container Registry] (https://console.cloud.google.com/gcr/images/non-prod-pdz/EU/frontend-propitix?project=non-prod-pdz&authuser=1&gcrImageListsize=30) (Depending on the environment. Either non-prod or prod)
+## CI/CD Pipeline
 
-## pulling the image
-```
-docker pull eu.gcr.io/$environment/frontend-propitix:$tag-version
-```
+The `Jenkinsfile` defines a multibranch pipeline that builds a Docker image and pushes it to AWS ECR:
 
-## Running (You can do this step without the pulling the above as it will put down if not found locally)
-To run the container:
-```
-$ docker run -d eu.gcr.io/$environment/frontend-propitix:$tag-version
-```
+| Branch / Tag | ECR tag |
+|---|---|
+| `dev` | `dev-<BUILD_NUMBER>` |
+| `staging` or `master` | `staging-<BUILD_NUMBER>` |
+| `release-*` | `prod-<BUILD_NUMBER>` |
 
-Default web root:
-```
-/usr/share/nginx/html
-```
+**Required Jenkins credentials:**
+- `GITHUB_CREDENTIALS` — GitHub personal access token
 
-## If you require permissions to GCP, or Gitlab resources, please talk to dare@propitix.com
-# CI/CD pipeline test - Project 9
+**Required Jenkins plugins:**
+- Docker Pipeline
+- AWS CLI (configured with ECR push permissions)
+
+## Security Notes
+
+- Passwords are hashed with bcrypt (`password_hash` / `password_verify`)
+- All SQL queries use prepared statements
+- DB credentials are injected via environment variables, not hardcoded
+- Apache is configured with `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, and `Referrer-Policy` headers
