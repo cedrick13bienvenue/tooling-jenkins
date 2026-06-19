@@ -1,5 +1,5 @@
-FROM php:7-apache
-MAINTAINER Dare dare@zooto.io
+FROM php:8.2-apache
+LABEL maintainer="dare@zooto.io"
 
 RUN docker-php-ext-install mysqli
 COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
